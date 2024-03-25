@@ -6,7 +6,7 @@
 
 struct Engine::Context
 {
-    Context(const Engine& engine, const char* name)
+    Context()
         : window{nullptr}
         , context{nullptr}
         , event{}
@@ -14,13 +14,13 @@ struct Engine::Context
         // Initialize SDL.
         if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
         {
-            engine.RuntimeError("SDL initialization failed: " + std::string(SDL_GetError()));
+            throw std::runtime_error("SDL initialization failed: " + std::string(SDL_GetError()));
         }
 
         // Initialize SDL_image.
         if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG))
         {
-            engine.RuntimeError("SDL_image initialization failed: " + std::string(IMG_GetError()));
+            throw std::runtime_error("SDL_image initialization failed: " + std::string(IMG_GetError()));
         }
 
         // OpenGl initialize configuration.
@@ -29,32 +29,36 @@ struct Engine::Context
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 
         // Create an SDL window.
-        window = SDL_CreateWindow(name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-        if (!window)
+        this->window = SDL_CreateWindow(ENGINE_WINDOW_NAME,
+                                        SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,
+                                        ENGINE_INITIAL_WINDOW_WIDTH, ENGINE_INITIAL_WINDOW_HEIGHT,
+                                        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+
+        if (!this->window)
         {
-            engine.RuntimeError("Window creation failed: " + std::string(SDL_GetError()));
+            throw std::runtime_error("Window creation failed: " + std::string(SDL_GetError()));
         }
 
         // Create an OpenGL context.
-        context = SDL_GL_CreateContext(window);
-        if (!context)
+        this->context = SDL_GL_CreateContext(this->window);
+        if (!this->context)
         {
-            engine.RuntimeError("OpenGL context creation failed: " + std::string(SDL_GetError()));
+            throw std::runtime_error("OpenGL context creation failed: " + std::string(SDL_GetError()));
         }
 
         // Initialize GLEW.
         GLenum glewError{glewInit()};
         if (glewError != GLEW_OK)
         {
-            engine.RuntimeError("GLEW initialization failed: " + std::string((const char*)glewGetErrorString(glewError)));
+            throw std::runtime_error("GLEW initialization failed: " + std::string((const char*)glewGetErrorString(glewError)));
         }
     }
 
     ~Context()
     {
         // Cleanup.
-        SDL_GL_DeleteContext(context);
-        SDL_DestroyWindow(window);
+        SDL_GL_DeleteContext(this->context);
+        SDL_DestroyWindow(this->window);
         IMG_Quit();
         SDL_Quit();
     }
@@ -68,7 +72,7 @@ Engine::Engine()
     : context{nullptr}
     , isRunning{false}
 {
-    this->context = new Context(*this, "Ygg Engine");
+    this->context = new Context;
     this->Log("Engine initialized!");
 }
 
