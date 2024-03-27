@@ -4,12 +4,12 @@ auto main(int argc, char** argv) -> int
 {
 	try
 	{
-		Engine engine;
+		ygg::detail::Engine engine;
 		engine.Run();
 	}
 	catch (const std::runtime_error& error)
 	{
-		std::cerr << "Runtime Error! " << error.what() << '\n';
+		std::cerr << error.what() << '\n';
 		return -1;
 	}
 

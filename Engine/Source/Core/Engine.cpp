@@ -1,27 +1,28 @@
 #include "Engine.hpp"
 
+#include "../Tree/Roots/Root.hpp"
+
 #include <SDL.h>
 #include <SDL_image.h>
 #include <GL/glew.h>
 
-struct Engine::Context
+namespace ygg
 {
-    Context()
+namespace detail
+{
+
+struct Engine::Implementation
+{
+    Implementation() YGG_EXCEPT
         : window{nullptr}
         , context{nullptr}
         , event{}
     {
         // Initialize SDL.
-        if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
-        {
-            throw std::runtime_error("SDL initialization failed: " + std::string(SDL_GetError()));
-        }
+        Assert(SDL_Init(SDL_INIT_EVERYTHING) == 0, "SDL initialization failed: " + std::string(SDL_GetError()));
 
         // Initialize SDL_image.
-        if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG))
-        {
-            throw std::runtime_error("SDL_image initialization failed: " + std::string(IMG_GetError()));
-        }
+        Assert(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG, "SDL_image initialization failed: " + std::string(IMG_GetError()));
 
         // OpenGl initialize configuration.
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -34,27 +35,18 @@ struct Engine::Context
                                         ENGINE_INITIAL_WINDOW_WIDTH, ENGINE_INITIAL_WINDOW_HEIGHT,
                                         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
-        if (!this->window)
-        {
-            throw std::runtime_error("Window creation failed: " + std::string(SDL_GetError()));
-        }
+        Assert(this->window, "Window creation failed: " + std::string(SDL_GetError()));
 
-        // Create an OpenGL context.
+        // Create an OpenGL implementation.
         this->context = SDL_GL_CreateContext(this->window);
-        if (!this->context)
-        {
-            throw std::runtime_error("OpenGL context creation failed: " + std::string(SDL_GetError()));
-        }
+        Assert(this->context, "OpenGL implementation creation failed: " + std::string(SDL_GetError()));
 
         // Initialize GLEW.
         GLenum glewError{glewInit()};
-        if (glewError != GLEW_OK)
-        {
-            throw std::runtime_error("GLEW initialization failed: " + std::string((const char*)glewGetErrorString(glewError)));
-        }
+        Assert(glewError == GLEW_OK, "GLEW initialization failed: " + std::string((const char*)glewGetErrorString(glewError)));
     }
 
-    ~Context()
+    ~Implementation() YGG_NOEXCEPT
     {
         // Cleanup.
         SDL_GL_DeleteContext(this->context);
@@ -68,35 +60,49 @@ struct Engine::Context
     SDL_Event event;
 };
 
-Engine::Engine()
-    : context{nullptr}
+Engine::Engine() YGG_EXCEPT
+    : implementation{nullptr}
     , isRunning{false}
 {
-    this->context = new Context;
-    this->Log("Engine initialized!");
+    this->implementation = new Implementation;
+    Print("Engine initialized!");
 }
 
-Engine::~Engine()
+Engine::~Engine() YGG_NOEXCEPT
 {
-    delete this->context;
-    this->Log("Engine was stopped.");
+    delete this->implementation;
+    Print("Engine was stopped.");
 }
 
-auto Engine::Run() -> void
+auto Engine::Run() YGG_EXCEPT -> void
 {
-    this->Log("Engine is running...");
+    Print("Engine is running...");
+
+    Root root;
 
     this->isRunning = true;
     while (this->isRunning)
     {
-        while (SDL_PollEvent(&this->context->event))
+        while (SDL_PollEvent(&this->implementation->event))
         {
-            if (this->context->event.type == SDL_QUIT) { this->isRunning = false; }
+            root.Flow(Root::FLOW_INPUT);
+            if (this->implementation->event.type == SDL_QUIT) { this->isRunning = false; }
         }
+
+        root.Flow(Root::FLOW_FEED);
+        root.Flow(Root::FLOW_FIXED_FEED);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
         // Render here...
-        SDL_GL_SwapWindow(this->context->window);
+        root.Flow(Root::FLOW_VIEW);
+
+        SDL_GL_SwapWindow(this->implementation->window);
+
+        root.Flow(Root::FLOW_REFRESH);
     }
 }
+
+} // namespace detail
+} // namespace ygg

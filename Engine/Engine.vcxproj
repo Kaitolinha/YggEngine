@@ -147,12 +147,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Tree\Roots\Root.cpp" />
+    <ClCompile Include="Source\Tree\Branches\Branch.cpp" />
     <ClCompile Include="Source\Core\Engine.cpp" />
     <ClCompile Include="Source\Main.cpp" />
+    <ClCompile Include="Source\Tree\Tree.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Tree\Roots\Root.hpp" />
+    <ClInclude Include="Source\Tree\Branches\Branch.hpp" />
     <ClInclude Include="Source\Core\Engine.hpp" />
+    <ClInclude Include="Source\Utilities\Attributes.hpp" />
     <ClInclude Include="Source\Utilities\Integers.hpp" />
+    <ClInclude Include="Source\Tree\Tree.hpp" />
+    <ClInclude Include="Source\Utilities\Memory\Allocator.hpp" />
+    <ClInclude Include="Source\Utilities\Memory\Pointer.hpp" />
+    <ClInclude Include="Source\Utilities\Memory\Reference.hpp" />
+    <ClInclude Include="Source\Utilities\Utility.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source\Utilities\Memory\Allocator.inl" />
+    <None Include="Source\Utilities\Memory\Pointer.inl" />
+    <None Include="Source\Utilities\Memory\Reference.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
